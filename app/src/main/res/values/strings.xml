@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MedFits Care</string>
+    <string name="app_full_title">MedFits Care Companion</string>
+    <string name="app_subtitle">AI-Powered Healthcare &amp; Lifestyle Assistant</string>
+    <string name="action_sign_in_google">Sign in with Google</string>
+    <string name="action_sign_out">Sign Out</string>
+    <string name="nav_dashboard">Home</string>
+    <string name="nav_chat">AI Guide</string>
+    <string name="nav_tracker">Tracker</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_care">Care Hub</string>
+    <string name="safety_disclaimer">Educational wellness companion only — not a substitute for professional medical advice, diagnosis, or prescription. Seek urgent care for emergency symptoms.</string>
+    <string name="specialist_disclaimer">Specialist inquiries are educational wellness consultations and do not book a clinical medical appointment.</string>
+</resources>

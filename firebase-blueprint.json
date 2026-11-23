@@ -1,0 +1,182 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Personalized wellness profile and daily goals for a MedFits user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "email": { "type": "string", "description": "Verified user email address." },
+        "fullName": { "type": "string", "description": "User full name." },
+        "ageRange": { "type": "string", "description": "User age or age range." },
+        "preferredLanguage": { "type": "string", "description": "Preferred language for AI responses." },
+        "dietaryPreference": { "type": "string", "enum": ["Vegetarian", "Non-vegetarian", "Vegan"] },
+        "wellnessGoal": { "type": "string", "description": "Primary wellness objective." },
+        "activityLevel": { "type": "string", "enum": ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"] },
+        "preferredRoutine": { "type": "string", "description": "Preferred daily schedule or routine." },
+        "wellnessPreferences": { "type": "string", "description": "Additional general wellness preferences." },
+        "waterGoalMl": { "type": "integer", "description": "Daily hydration target in milliliters." },
+        "sleepGoalHours": { "type": "number", "description": "Daily sleep target in hours." },
+        "exerciseGoalMinutes": { "type": "integer", "description": "Daily exercise target in minutes." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update." }
+      },
+      "required": [
+        "userId",
+        "email",
+        "fullName",
+        "ageRange",
+        "preferredLanguage",
+        "dietaryPreference",
+        "wellnessGoal",
+        "activityLevel",
+        "waterGoalMl",
+        "sleepGoalHours",
+        "exerciseGoalMinutes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "An AI wellness chatbot conversation session.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "lastMessagePreview": { "type": "string" },
+        "messageCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "category", "lastMessagePreview", "messageCount", "createdAt", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual message in a chat session.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "sessionId", "role", "content", "category", "createdAt"]
+    },
+    "WellnessRecord": {
+      "title": "WellnessRecord",
+      "description": "Daily health and lifestyle tracking entry.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "dateKey": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+        "waterMl": { "type": "integer" },
+        "sleepHours": { "type": "number" },
+        "activityType": { "type": "string" },
+        "exerciseMinutes": { "type": "integer" },
+        "habitsCompleted": { "type": "array" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "dateKey", "waterMl", "sleepHours", "activityType", "exerciseMinutes", "habitsCompleted", "createdAt", "updatedAt"]
+    },
+    "HealthReport": {
+      "title": "HealthReport",
+      "description": "Uploaded PDF health report with extracted text and Gemini plain-language summary.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileSizeBytes": { "type": "integer" },
+        "pageCount": { "type": "integer" },
+        "extractedText": { "type": "string" },
+        "aiSummary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fileName", "fileSizeBytes", "pageCount", "extractedText", "aiSummary", "createdAt", "updatedAt"]
+    },
+    "ReportQuestion": {
+      "title": "ReportQuestion",
+      "description": "Follow-up Q&A pair on an uploaded PDF health report.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "reportId": { "type": "string" },
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "reportId", "question", "answer", "createdAt"]
+    },
+    "SpecialistRequest": {
+      "title": "SpecialistRequest",
+      "description": "User wellness specialist support inquiry.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "category": { "type": "string" },
+        "concern": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in_review", "resolved"] },
+        "adminNotes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userEmail", "userName", "category", "concern", "status", "createdAt", "updatedAt"]
+    },
+    "WellnessResource": {
+      "title": "WellnessResource",
+      "description": "Curated educational wellness tip/resource managed by admins.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "summary": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "summary", "createdBy", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document owned by userId."
+    },
+    "/users/{userId}/chatSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/ChatSession" },
+      "description": "User AI chat sessions."
+    },
+    "/users/{userId}/chatSessions/{sessionId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Messages inside a user chat session."
+    },
+    "/users/{userId}/wellnessRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/WellnessRecord" },
+      "description": "Daily wellness tracking logs."
+    },
+    "/users/{userId}/healthReports/{reportId}": {
+      "schema": { "$ref": "#/entities/HealthReport" },
+      "description": "Uploaded PDF health reports and Gemini explanations."
+    },
+    "/users/{userId}/healthReports/{reportId}/questions/{questionId}": {
+      "schema": { "$ref": "#/entities/ReportQuestion" },
+      "description": "Follow-up questions and AI explanations for a report."
+    },
+    "/specialistRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/SpecialistRequest" },
+      "description": "Specialist support requests scoped by userId or admin."
+    },
+    "/wellnessResources/{resourceId}": {
+      "schema": { "$ref": "#/entities/WellnessResource" },
+      "description": "Curated wellness resources readable by signed-in users and managed by admins."
+    }
+  }
+}

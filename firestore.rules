@@ -1,0 +1,380 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Hardened Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (
+          request.auth.token.email == 'manishaaaaa.govind@gmail.com' &&
+          request.auth.token.email_verified == true
+        )
+      );
+    }
+
+    // --- Entity Validation Helpers ---
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100 &&
+             data.ageRange is string && data.ageRange.size() >= 1 && data.ageRange.size() <= 40 &&
+             data.preferredLanguage is string && data.preferredLanguage.size() >= 1 && data.preferredLanguage.size() <= 40 &&
+             data.dietaryPreference in ['Vegetarian', 'Non-vegetarian', 'Vegan'] &&
+             data.wellnessGoal is string && data.wellnessGoal.size() <= 200 &&
+             data.activityLevel in ['Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active'] &&
+             (!('preferredRoutine' in data) || (data.preferredRoutine is string && data.preferredRoutine.size() <= 300)) &&
+             (!('wellnessPreferences' in data) || (data.wellnessPreferences is string && data.wellnessPreferences.size() <= 400)) &&
+             data.waterGoalMl is int && data.waterGoalMl >= 500 && data.waterGoalMl <= 6000 &&
+             (data.sleepGoalHours is int || data.sleepGoalHours is float) && data.sleepGoalHours >= 4 && data.sleepGoalHours <= 12 &&
+             data.exerciseGoalMinutes is int && data.exerciseGoalMinutes >= 10 && data.exerciseGoalMinutes <= 300 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidChatSession(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.lastMessagePreview is string && data.lastMessagePreview.size() <= 240 &&
+             data.messageCount is int && data.messageCount >= 0 && data.messageCount <= 10000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidChatMessage(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.sessionId is string && data.sessionId.size() >= 1 && data.sessionId.size() <= 128 &&
+             data.role in ['user', 'assistant'] &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 16000 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidWellnessRecord(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.dateKey is string && data.dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+             data.waterMl is int && data.waterMl >= 0 && data.waterMl <= 10000 &&
+             (data.sleepHours is int || data.sleepHours is float) && data.sleepHours >= 0 && data.sleepHours <= 24 &&
+             data.activityType is string && data.activityType.size() <= 80 &&
+             data.exerciseMinutes is int && data.exerciseMinutes >= 0 && data.exerciseMinutes <= 600 &&
+             data.habitsCompleted is list && data.habitsCompleted.size() <= 15 &&
+             (data.habitsCompleted.size() == 0 || data.habitsCompleted[0] is string) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 500)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidHealthReport(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 160 &&
+             data.fileSizeBytes is int && data.fileSizeBytes >= 1 && data.fileSizeBytes <= 8388608 &&
+             data.pageCount is int && data.pageCount >= 1 && data.pageCount <= 200 &&
+             data.extractedText is string && data.extractedText.size() <= 50000 &&
+             data.aiSummary is string && data.aiSummary.size() <= 20000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidReportQuestion(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.reportId is string && data.reportId.size() >= 1 && data.reportId.size() <= 128 &&
+             data.question is string && data.question.size() >= 1 && data.question.size() <= 2000 &&
+             data.answer is string && data.answer.size() >= 1 && data.answer.size() <= 16000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidSpecialistRequest(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userEmail is string && data.userEmail.size() <= 200 &&
+             data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 100 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.concern is string && data.concern.size() >= 5 && data.concern.size() <= 2000 &&
+             data.status in ['pending', 'in_review', 'resolved'] &&
+             (!('adminNotes' in data) || (data.adminNotes is string && data.adminNotes.size() <= 1000)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidWellnessResource(data) {
+      return data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 1000 &&
+             data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // --- Collection Rules ---
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && request.auth.uid == adminId;
+      allow list, write: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'email', 'fullName', 'ageRange', 'preferredLanguage',
+                         'dietaryPreference', 'wellnessGoal', 'activityLevel',
+                         'waterGoalMl', 'sleepGoalHours', 'exerciseGoalMinutes',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'email', 'fullName', 'ageRange', 'preferredLanguage',
+                         'dietaryPreference', 'wellnessGoal', 'activityLevel',
+                         'preferredRoutine', 'wellnessPreferences',
+                         'waterGoalMl', 'sleepGoalHours', 'exerciseGoalMinutes',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'email', 'fullName', 'ageRange', 'preferredLanguage',
+                         'dietaryPreference', 'wellnessGoal', 'activityLevel',
+                         'preferredRoutine', 'wellnessPreferences',
+                         'waterGoalMl', 'sleepGoalHours', 'exerciseGoalMinutes',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Chat Sessions subcollection
+      match /chatSessions/{sessionId} {
+        allow get: if isValidId(sessionId) && (isOwner(userId) || isAdmin());
+        allow list: if isOwner(userId) || isAdmin();
+
+        allow create: if isOwner(userId) &&
+                         isValidId(sessionId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll([
+                           'userId', 'title', 'category', 'lastMessagePreview',
+                           'messageCount', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'title', 'category', 'lastMessagePreview',
+                           'messageCount', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidChatSession(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(sessionId) &&
+                         isValidChatSession(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'category', 'lastMessagePreview', 'messageCount', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(sessionId);
+
+        // Chat Messages subcollection
+        match /messages/{messageId} {
+          allow get: if isValidId(messageId) && (isOwner(userId) || isAdmin());
+          allow list: if isOwner(userId) || isAdmin();
+
+          allow create: if isOwner(userId) &&
+                           isValidId(messageId) &&
+                           incoming().userId == request.auth.uid &&
+                           incoming().sessionId == sessionId &&
+                           incoming().keys().hasAll([
+                             'userId', 'sessionId', 'role', 'content', 'category', 'createdAt'
+                           ]) &&
+                           incoming().keys().hasOnly([
+                             'userId', 'sessionId', 'role', 'content', 'category', 'createdAt'
+                           ]) &&
+                           isValidChatMessage(incoming());
+
+          allow update: if false;
+          allow delete: if isOwner(userId) && isValidId(messageId);
+        }
+      }
+
+      // Wellness Records subcollection
+      match /wellnessRecords/{recordId} {
+        allow get: if isValidId(recordId) && (isOwner(userId) || isAdmin());
+        allow list: if isOwner(userId) || isAdmin();
+
+        allow create: if isOwner(userId) &&
+                         isValidId(recordId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll([
+                           'userId', 'dateKey', 'waterMl', 'sleepHours', 'activityType',
+                           'exerciseMinutes', 'habitsCompleted', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'dateKey', 'waterMl', 'sleepHours', 'activityType',
+                           'exerciseMinutes', 'habitsCompleted', 'notes', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidWellnessRecord(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(recordId) &&
+                         isValidWellnessRecord(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'dateKey', 'waterMl', 'sleepHours', 'activityType',
+                           'exerciseMinutes', 'habitsCompleted', 'notes', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(recordId);
+      }
+
+      // Health Reports subcollection
+      match /healthReports/{reportId} {
+        allow get: if isValidId(reportId) && (isOwner(userId) || isAdmin());
+        allow list: if isOwner(userId) || isAdmin();
+
+        allow create: if isOwner(userId) &&
+                         isValidId(reportId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll([
+                           'userId', 'fileName', 'fileSizeBytes', 'pageCount',
+                           'extractedText', 'aiSummary', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'fileName', 'fileSizeBytes', 'pageCount',
+                           'extractedText', 'aiSummary', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidHealthReport(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(reportId) &&
+                         isValidHealthReport(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'aiSummary', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(reportId);
+
+        // Follow-up Questions on a Report
+        match /questions/{questionId} {
+          allow get: if isValidId(questionId) && (isOwner(userId) || isAdmin());
+          allow list: if isOwner(userId) || isAdmin();
+
+          allow create: if isOwner(userId) &&
+                           isValidId(questionId) &&
+                           incoming().userId == request.auth.uid &&
+                           incoming().reportId == reportId &&
+                           incoming().keys().hasAll([
+                             'userId', 'reportId', 'question', 'answer', 'createdAt'
+                           ]) &&
+                           incoming().keys().hasOnly([
+                             'userId', 'reportId', 'question', 'answer', 'createdAt'
+                           ]) &&
+                           isValidReportQuestion(incoming());
+
+          allow update: if false;
+          allow delete: if isOwner(userId) && isValidId(questionId);
+        }
+      }
+    }
+
+    // CollectionGroup read access for Admin Dashboard metrics
+    match /{path=**}/chatSessions/{sessionId} {
+      allow list: if isAdmin();
+    }
+    match /{path=**}/wellnessRecords/{recordId} {
+      allow list: if isAdmin();
+    }
+
+    // Specialist Support Requests (Top-level so admins can list/review all, users see own)
+    match /specialistRequests/{requestId} {
+      allow get: if isSignedIn() && isValidId(requestId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(requestId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().status == 'pending' &&
+                       !('adminNotes' in incoming()) &&
+                       incoming().keys().hasAll([
+                         'userId', 'userEmail', 'userName', 'category', 'concern',
+                         'status', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'userEmail', 'userName', 'category', 'concern',
+                         'status', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidSpecialistRequest(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(requestId) &&
+                       isAdmin() &&
+                       isValidSpecialistRequest(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'adminNotes', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(requestId) && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    // Admin-curated Wellness Resources (Readable by signed-in users, editable only by Admins)
+    match /wellnessResources/{resourceId} {
+      allow get: if isSignedIn() && isValidId(resourceId);
+      allow list: if isSignedIn();
+
+      allow create: if isAdmin() &&
+                       isValidId(resourceId) &&
+                       incoming().createdBy == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'title', 'category', 'summary', 'createdBy', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'title', 'category', 'summary', 'createdBy', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidWellnessResource(incoming());
+
+      allow update: if isAdmin() &&
+                       isValidId(resourceId) &&
+                       isValidWellnessResource(incoming()) &&
+                       incoming().createdBy == existing().createdBy &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'category', 'summary', 'updatedAt'
+                       ]);
+
+      allow delete: if isAdmin() && isValidId(resourceId);
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "MedFits Care",
+  "description": "AI-powered healthcare and lifestyle companion with personalized wellness guidance, habit tracking, PDF health report explanations, and specialist support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
